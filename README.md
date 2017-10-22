@@ -64,9 +64,9 @@
         <ol>
             <li>. ~/lawnbot_ws/devel/setup.bash </li>
             <li>
-                roslaunch turtle_gazebo turtle.launch world_file:=worlds/turtle_search_alg_world.world
+                roslaunch lawnbot_gazebo turtle.launch world_file:=worlds/turtle_search_alg_world.world
                 <br><b>or</b><br>
-                roslaunch turtle_gazebo turtle.launch 
+                roslaunch lawnbot_gazebo turtle.launch 
             </li>
             <li>roslaunch turtlebot_teleop keyboard_teleop.launch</li>
             <li>source devel/setup.bash </li>
@@ -81,6 +81,7 @@
             <li>There is a bug with the default turtlebot. It is incompatable with the current
              version of gazebo without modifying default xml of the model. Specifically there something wrong with the motors.</li> 
             <li>for creating an empty world: roslaunch gazebo_ros empty_world.launch </li>
+            <li>Note for model building in blender, you need to use the blender renderer, then simply export the material </li>
         </ol>
     </p>
 </body>

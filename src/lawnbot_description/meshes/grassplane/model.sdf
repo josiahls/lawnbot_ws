@@ -1,7 +1,0 @@
-<?xml version='1.0'?>
-<sdf version='1.6'>
-  <model name='grassplane'>
-    <static>1</static>
-    <allow_auto_disable>0</allow_auto_disable>
-  </model>
-</sdf>
