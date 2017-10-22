@@ -73,6 +73,16 @@
             <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_description`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME
         </ol>
     </p>
+    <h5>
+        <b>Notes:</b>
+    </h5>
+    <p>
+        <ol>
+            <li>There is a bug with the default turtlebot. It is incompatable with the current
+             version of gazebo without modifying default xml of the model. Specifically there something wrong with the motors.</li> 
+            <li>for creating an empty world: roslaunch gazebo_ros empty_world.launch </li>
+        </ol>
+    </p>
 </body>
 </html>
 

@@ -1,7 +1,9 @@
 <launch>
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <arg name="world" default="lawnbot_blank"/>
+
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find lawnbot_gazebo)/worlds/lawnbot_tutorial_gas_station.world"/>
+    <arg name="world_name" value="$(find lawnbot_gazebo)/worlds/$(arg world).world"/>
     <!-- more default parameters can be changed here -->
   </include>
 </launch>
