@@ -1,6 +1,6 @@
 <launch>
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
-  <arg name="world" default="lawnbot_blank"/>
+  <arg name="world" default="lawnbot_test_course"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find lawnbot_gazebo)/worlds/$(arg world).world"/>

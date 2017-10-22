@@ -67,6 +67,8 @@
       the package.xml file. You can than use URIs of type model://my_package/stuff. -->
       <gazebo_ros
           gazebo_plugin_path="${prefix}/lib"
-          gazebo_model_path="${prefix}/models" />
+          gazebo_model_path="${prefix}/.."
+          gazebo_media_path="${prefix}/.."/>/>
   </export>
+
 </package>
