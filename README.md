@@ -24,6 +24,7 @@
             <li>sudo apt-get install ros-kinetic-map-server</li>
             <li>sudo apt-get install ros-kinetic-move-base</li>
             <li>sudo apt-get install ros-kinetic-turtlebot</li>
+            <li>sudo apt-get install ros-kinetic-lms1xx</li>
         </ol>
     </p>  
     <h5>
@@ -55,6 +56,17 @@
             <li>cd ~/lawnbot_ws </li>
             <li>catkin_make </li>
             <li>. ~/lawnbot_ws/devel/setup.bash </li>
+        </ol>
+        As a side note, there are some packages you will need to
+        download in their respective folders.  
+        <a>wiki.ros.org/ROS/mallasrikanth/baxter</a> 
+        <ol>
+            <li>cd ~/lawnbot_ws/src </li>
+            <li>git clone https://github.com/[repository.git]</li>
+            <li>git clone https://github.com/jackal/jackal.git</li>
+            <li>git clone https://github.com/ros-drivers/pointgrey_camera_driver.git</li>
+            <li>catkin build</li>
+            <li>catkin_make</li>
         </ol>
     </p>
     <h5>
