@@ -68,6 +68,12 @@
             <li>git clone https://github.com/[repository.git]</li>
             <li>git clone https://github.com/jackal/jackal.git</li>
             <li>git clone https://github.com/ros-drivers/pointgrey_camera_driver.git</li>
+            <li>git clone https://github.com/jackal/jackal_simulator.git</li>
+            <li>git clone https://github.com/jackal/jackal_desktop.git</li>
+            <li>git clone https://github.com/ros-visualization/interactive_marker_twist_server.git</li>
+            <li>rosdep install --from-paths . --ignore-src --rosdistro=kinetic</li>
+            <li>http://wiki.ros.org/jackal_viz</li>
+            <li>https://gist.github.com/vfdev-5/57a0171d8f5697831dc8d374839bca12</li>
             <li>catkin build</li>
             <li>catkin_make</li>
         </ol>
@@ -86,6 +92,7 @@
             <li>roslaunch turtlebot_teleop keyboard_teleop.launch</li>
             <li>source devel/setup.bash </li>
             <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_description`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME
+            <li>roslaunch jackal_viz view_robot.launch</li>
         </ol>
     </p>
     <h5>
