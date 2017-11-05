@@ -16,11 +16,14 @@
             <li>echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc</li>
             <li>source ~/.bashrc</li>
             <li>sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential</li>
+            <li>CAUTION: sudo apt-get install python3-catkin-pkg</li>
+            <li>CAUTION: sudo apt-get install python3-catkin-pkg-modules</li>
+            <li>Reference http://wiki.ros.org/IDEs#PyCharm_.28community_edition.29 for pycharm setup so you dont waste time</li>
         </ol>
         <p> For robot specific dependencies: </p>
         <ol>
             <li>sudo apt-get install ros-kinetic-amcl</li>
-            <li>sudo apt-get install ros-kinetic-std_msgs</li>
+            <li>sudo apt-get install ros-kinetic-std-msgs</li>
             <li>sudo apt-get install ros-kinetic-map-server</li>
             <li>sudo apt-get install ros-kinetic-move-base</li>
             <li>sudo apt-get install ros-kinetic-turtlebot</li>
@@ -94,6 +97,18 @@
              version of gazebo without modifying default xml of the model. Specifically there something wrong with the motors.</li> 
             <li>for creating an empty world: roslaunch gazebo_ros empty_world.launch </li>
             <li>Note for model building in blender, you need to use the blender renderer, then simply export the material </li>
+        </ol>
+    </p>
+        <h5>
+        <b>Scripts:</b>
+    </h5>
+    <p>
+        <ol>
+            <li> make sure the pycharm's launcher is referencing bash (explained in first paragraph) </li>
+            <li> create scripts folder at top of package </li>
+            <li> add blank __init__.py </li>
+            <li> do chmod -x on any scripts to be executable </li>
+            <li> execute using: rosrun [package] [script] </li>
         </ol>
     </p>
 </body>
