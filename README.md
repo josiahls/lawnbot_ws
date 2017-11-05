@@ -89,9 +89,10 @@
                 <br><b>or</b><br>
                 roslaunch lawnbot_gazebo turtle.launch 
             </li>
-            <li>roslaunch turtlebot_teleop keyboard_teleop.launch</li>
+            <li>roslaunch turtlebot_teleop keyboard_teleop.launch or
+             roslaunch lawnbot_gazebo -v jackal_worlds.launch config:=front_lawnbot_config</li>
             <li>source devel/setup.bash </li>
-            <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_description`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME
+            <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_descripsourcrtion`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME
             <li>roslaunch jackal_viz view_robot.launch</li>
         </ol>
     </p>
