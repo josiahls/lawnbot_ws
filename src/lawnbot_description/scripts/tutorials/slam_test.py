@@ -47,7 +47,7 @@ def listener():
 
 
 if __name__ == '__main__':
-    global ranges
+    global state
     plt.ion()
     plt.show()
     listener()

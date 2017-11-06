@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-import rosdep2
-import rosdistro
-import rosinstall
-import rospkg
-
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan

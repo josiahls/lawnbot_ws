@@ -70,7 +70,7 @@
       <gazebo_ros
           gazebo_plugin_path="${prefix}/lib"
           gazebo_model_path="${prefix}/.."
-          gazebo_media_path="${prefix}/.."/>/>
+          gazebo_media_path="${prefix}/.."/>
   </export>
 
 </package>
