@@ -119,6 +119,11 @@
             <li> execute using: rosrun [package] [script] </li>
         </ol>
     </p>
+    <p>
+        <ol>
+            <li> Note, the range 0 of the laser scanner is far right side </li>
+        </ol>
+    </p>
 </body>
 </html>
 

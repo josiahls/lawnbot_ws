@@ -8,8 +8,11 @@ import rospy
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt2
 
 from core.State import State
+from lawnbot_description.scripts.core.Problem import Problem
+
 
 class Driver:
 
@@ -36,23 +39,42 @@ class Driver:
         rospy.loginfo("Waiting to start...")
 
         # set processing rate
-        rospy.Rate(1)
+        rospy.Rate(20)
 
         # init subscribers
         rospy.Subscriber("/odometry/filtered", Odometry, state.odom_callback)
-        #rospy.Subscriber("/front/scan", LaserScan, self.callback)
+        rospy.Subscriber("/front/scan", LaserScan, state.laser_callback)
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
 
         while not rospy.is_shutdown():
+            #problem  = Problem(state.state, state.goal)
+
             try:
-                print("Refreshing...")
+                #print("Refreshing...")
                 plt.clf()
-                x, y = np.argwhere(state.state != 0).T
+                x, y = np.argwhere(state.state == 1).T
                 plt.scatter(x,y)
+                x, y = np.argwhere(state.state == 2).T
+                plt.scatter(x,y, marker='*')
                 plt.pause(0.5)
             except NameError:
                 print("well, it WASN'T defined after all!")
+        '''
+        while not rospy.is_shutdown():
+            try:
+                print("Refreshing...")
+                x = [None] * len(state.ranges)
+                for i in range(len(state.ranges)):
+                    x[i] = i
 
+                plt.clf()
+                plt.plot(x, state.ranges)
+                plt.pause(0.5)
+            except NameError:
+                print("well, it WASN'T defined after all!")
+            except ValueError:
+                print("Ranges is not to be shown, x is still not valid!")
+            '''
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
 
