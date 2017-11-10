@@ -47,7 +47,7 @@ class Driver:
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
 
         while not rospy.is_shutdown():
-            #problem  = Problem(state.state, state.goal)
+            problem  = Problem(state.state, state.goal)
 
             try:
                 #print("Refreshing...")
