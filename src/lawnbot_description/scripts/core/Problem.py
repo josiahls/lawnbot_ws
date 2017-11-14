@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 class Problem(object):
 
     """The abstract class for a formal problem.  You should subclass
@@ -31,7 +33,7 @@ class Problem(object):
         list, as specified in the constructor. Override this method if
         checking against a single self.goal is not enough."""
         if isinstance(self.goal, list):
-            return is_in(state, self.goal)
+            return False
         else:
             return state == self.goal
 

@@ -7,7 +7,7 @@
     <!-- more default parameters can be changed here -->
   </include>
 
-  <param name="robot_description" command="$(find xacro)/xacro.py --inorder $(find jackal_description)/urdf/jackal.urdf.xacro" />
+   <param name="robot_description" command="$(find xacro)/xacro.py --inorder $(find jackal_description)/urdf/jackal.urdf.xacro" />
 
 
   <!-- Short-term hack to support the original front_laser:=true argument for spawning
@@ -31,7 +31,6 @@
   </include>
 
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot" />
-
 
 </launch>
 

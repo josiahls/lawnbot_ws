@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-class Node:
+class SearchNode(object):
 
     """A node in a search tree. Contains a pointer to the parent (the node
     that this is a successor of) and to the actual state for this node. Note
@@ -35,8 +35,8 @@ class Node:
     def child_node(self, problem, action):
         """[Figure 3.10]"""
         next = problem.result(self.state, action)
-        return Node(next, self, action,
-                    problem.path_cost(self.path_cost, self.state,
+        return SearchNode(next, self, action,
+                          problem.path_cost(self.path_cost, self.state,
                                       action, next))
 
     def solution(self):
@@ -57,7 +57,7 @@ class Node:
     # want in other contexts.]
 
     def __eq__(self, other):
-        return isinstance(other, Node) and self.state == other.state
+        return isinstance(other, SearchNode) and self.state == other.state
 
     def __hash__(self):
         return hash(self.state)

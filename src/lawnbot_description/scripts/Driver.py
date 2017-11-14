@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
+import matplotlib.pyplot as plt
 # This driver is heavily inspired by:
 # https://answers.ros.org/question/232216/multiple-subscribers-and-single-publisher-in-one-python-script/
 # Sood and tercelkisor deserve credit.
 import numpy as np
+
 import rospy
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt2
 
+from core.LawnBotProblem import LawnBotProblem
 from core.State import State
-from lawnbot_description.scripts.core.Problem import Problem
+from core.UninformedSearch import UninformedSearch
 
 
 class Driver:
@@ -44,18 +45,25 @@ class Driver:
         # init subscribers
         rospy.Subscriber("/odometry/filtered", Odometry, state.odom_callback)
         rospy.Subscriber("/front/scan", LaserScan, state.laser_callback)
+        #rospy.Subscriber("/front/left/image_raw/compressedDepth", LaserScan, state.laser_callback)
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
 
         while not rospy.is_shutdown():
-            problem  = Problem(state.state, state.goal)
+
+            problem  = LawnBotProblem(initial=np.array((state.x, state.y),int), goal=0, state_space=state.state)
+
+            searcher = UninformedSearch()
+            searcher.graph_search(problem)
 
             try:
                 #print("Refreshing...")
                 plt.clf()
                 x, y = np.argwhere(state.state == 1).T
-                plt.scatter(x,y)
+                plt.scatter(x,y, c="green")
                 x, y = np.argwhere(state.state == 2).T
-                plt.scatter(x,y, marker='*')
+                plt.scatter(x,y, c="blue")
+                x, y = np.argwhere(state.state == 3).T
+                plt.scatter(x,y, c="red")
                 plt.pause(0.5)
             except NameError:
                 print("well, it WASN'T defined after all!")

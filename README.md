@@ -92,8 +92,8 @@
             <li>roslaunch turtlebot_teleop keyboard_teleop.launch or
              roslaunch lawnbot_gazebo -v jackal_worlds.launch config:=front_lawnbot_config</li>
             <li>source devel/setup.bash </li>
-            <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_descripsourcrtion`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME
-            <li>roslaunch jackal_viz view_robot.launch</li>
+            <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_descripsourcrtion`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME </li>
+            <li>roslaunch jackal_viz view_robot.launch or roslaunch turtlebot_rviz_launchers view_robot.launch</li>
         </ol>
     </p>
     <h5>
