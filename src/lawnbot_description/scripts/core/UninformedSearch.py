@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from SearchNode import SearchNode
 
+import rospy
 
 class UninformedSearch(object):
 
@@ -13,9 +14,10 @@ class UninformedSearch(object):
         explored = set()
 
         # While the frontier is not empty
-        while frontier.__sizeof__() > 0:
+        while frontier:
             # Get the first child
             node = frontier.pop()
+            rospy.loginfo("Going to frontier of: %s", frontier.__str__())
 
             # Original code had the goal test being the state
             # I just want the position
@@ -30,11 +32,11 @@ class UninformedSearch(object):
 
             # If the node is not the goal state then
             # add it to the explored set
-            explored.add(node.state)
+            explored.add(tuple(node.state))
 
             # Add new node to the frontier
             frontier.extend(child for child in node.expand(problem)
-                            if child.state not in explored and
+                            if tuple(child.state) not in explored and
                             child not in frontier)
 
         return None

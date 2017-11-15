@@ -13,6 +13,7 @@ from sensor_msgs.msg import LaserScan
 from core.LawnBotProblem import LawnBotProblem
 from core.State import State
 from core.UninformedSearch import UninformedSearch
+from core.SearchNode import SearchNode
 
 
 class Driver:
@@ -50,23 +51,30 @@ class Driver:
 
         while not rospy.is_shutdown():
 
-            problem  = LawnBotProblem(initial=np.array((state.x, state.y),int), goal=0, state_space=state.state)
+            problem  = LawnBotProblem(initial=np.array([state.y, state.x],int),
+                                      goal=0, state_space=state.state)
 
             searcher = UninformedSearch()
-            searcher.graph_search(problem)
+            node = searcher.graph_search(problem)
 
             try:
                 #print("Refreshing...")
                 plt.clf()
                 x, y = np.argwhere(state.state == 1).T
-                plt.scatter(x,y, c="green")
-                x, y = np.argwhere(state.state == 2).T
                 plt.scatter(x,y, c="blue")
-                x, y = np.argwhere(state.state == 3).T
-                plt.scatter(x,y, c="red")
+                x, y = np.argwhere(state.state == 2).T
+                plt.scatter(x,y, c="black", marker='*')
+
+                if node != None:
+                    for thisNode in node.path():
+                        rospy.loginfo("Moving to %s of state %s", thisNode.state, state.state.shape)
+                        plt.scatter(thisNode.state[0], thisNode.state[1], c="red")
+                #x, y = np.argwhere(state.state == 3).T
                 plt.pause(0.5)
             except NameError:
                 print("well, it WASN'T defined after all!")
+            except TypeError:
+                print("State is not set yet")
         '''
         while not rospy.is_shutdown():
             try:

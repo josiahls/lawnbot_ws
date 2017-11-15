@@ -61,7 +61,7 @@ class State:
         self.y = y
 
 
-        rospy.loginfo("State:odom_callback : current position:  x: %s y :%s z: %s", x, y, self.z)
+        #rospy.loginfo("State:odom_callback : current position:  x: %s y :%s z: %s", x, y, self.z)
 
         #rospy.loginfo("State:odom_callback: shape: %s", self.state.shape)
 
@@ -69,9 +69,10 @@ class State:
         # and / or if it is safe to expand
         if(self.expand_state(y,x)):
             for i in range (10):
-                if (self.state[int(y + i * np.sin(self.z))][int(x + -i * np.cos(self.z))] == 2):
+                state_value = self.state[int(y + i * np.sin(self.z))][int(x + -i * np.cos(self.z))]
+                if (state_value == 2):
                     break
-                if (self.state[int(y + i * np.sin(self.z))][int(x + -i * np.cos(self.z))] == 0):
+                if (state_value == 0 or state_value == 3):
                     self.state[int(y + i * np.sin(self.z))][int(x + -i * np.cos(self.z))] = 1
 
             # add 1 to the current valid location
