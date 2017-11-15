@@ -31,10 +31,10 @@ class Traverser(object):
             current_x = state.x
             current_z = state.z
 
-            rospy.loginfo("Traversing new node")
+            rospy.loginfo("Traversing new node %s", node.state)
 
-            dest_y = node.state[0]
-            dest_x = node.state[1]
+            dest_y = state.y_offset + node.state[0]
+            dest_x = state.x_offset + node.state[1]
 
             if (last_x or last_y == -1):
                 last_x = dest_x
@@ -49,9 +49,7 @@ class Traverser(object):
             rise_over_run = (current_y - dest_y) / (current_x - dest_x)
             dest_angle = np.arctan(rise_over_run)
 
-            while (abs(current_x - dest_x) > 2) or \
-                    (abs(current_y - dest_y) > 2) or \
-                    (abs(dest_angle - current_z) > .2):
+            while abs(dest_angle - current_z) > .2:
 
                 while State.lock:
                     print("Locked")
@@ -75,8 +73,8 @@ class Traverser(object):
                     sleep(1)
                     cmd_move.linear.x = .5
                     rospy.loginfo("Traversing x by %s", cmd_move.linear.x)
-                    move_publisher.publish(cmd_move)
-                    sleep(.1)
+                    #move_publisher.publish(cmd_move)
+                    #sleep(.1)
                 else:
                     cmd_turn.angular.z = dest_angle - current_z
                     move_publisher.publish(cmd_turn)
