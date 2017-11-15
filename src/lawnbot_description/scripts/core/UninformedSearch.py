@@ -3,6 +3,9 @@ from SearchNode import SearchNode
 
 import rospy
 
+from State import State
+
+
 class UninformedSearch(object):
 
     def graph_search(self, problem,frontier=list()):
@@ -17,7 +20,7 @@ class UninformedSearch(object):
         while frontier:
             # Get the first child
             node = frontier.pop()
-            rospy.loginfo("Going to frontier of: %s", frontier.__str__())
+            #rospy.loginfo("Going to frontier of: %s", frontier.__str__())
 
             # Original code had the goal test being the state
             # I just want the position
@@ -33,6 +36,10 @@ class UninformedSearch(object):
             # If the node is not the goal state then
             # add it to the explored set
             explored.add(tuple(node.state))
+
+            while State.lock:
+                print ("Waiting...")
+                pass
 
             # Add new node to the frontier
             frontier.extend(child for child in node.expand(problem)

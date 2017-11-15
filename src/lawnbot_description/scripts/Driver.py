@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 # https://answers.ros.org/question/232216/multiple-subscribers-and-single-publisher-in-one-python-script/
 # Sood and tercelkisor deserve credit.
 import numpy as np
+from time import sleep
 
 import rospy
+from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 
@@ -14,6 +16,7 @@ from core.LawnBotProblem import LawnBotProblem
 from core.State import State
 from core.UninformedSearch import UninformedSearch
 from core.SearchNode import SearchNode
+from core.Traverser import Traverser
 
 
 class Driver:
@@ -46,8 +49,14 @@ class Driver:
         # init subscribers
         rospy.Subscriber("/odometry/filtered", Odometry, state.odom_callback)
         rospy.Subscriber("/front/scan", LaserScan, state.laser_callback)
+        move_publisher = rospy.Publisher('/jackal_velocity_controller/cmd_vel', Twist)
         #rospy.Subscriber("/front/left/image_raw/compressedDepth", LaserScan, state.laser_callback)
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
+
+        traverser = Traverser()
+        traverser.call_starting_move(state, move_publisher)
+        sleep(2)
+
 
         while not rospy.is_shutdown():
 
@@ -67,7 +76,7 @@ class Driver:
 
                 if node != None:
                     for thisNode in node.path():
-                        rospy.loginfo("Moving to %s of state %s", thisNode.state, state.state.shape)
+                        #rospy.loginfo("Moving to %s of state %s", thisNode.state, state.state.shape)
                         plt.scatter(thisNode.state[0], thisNode.state[1], c="red")
                 #x, y = np.argwhere(state.state == 3).T
                 plt.pause(0.5)
@@ -75,6 +84,13 @@ class Driver:
                 print("well, it WASN'T defined after all!")
             except TypeError:
                 print("State is not set yet")
+
+            if node is not None:
+                traverser = Traverser()
+                traverser.call_move(node.path(), state, move_publisher)
+                sleep(2)
+            else:
+                print("Node is null")
         '''
         while not rospy.is_shutdown():
             try:

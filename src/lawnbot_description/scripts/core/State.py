@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy as np
 
 import rospy
@@ -11,6 +12,8 @@ from tf.transformations import euler_from_quaternion
 
 class State:
 
+    lock = False
+
     def __init__(self, precision=10):
         self.odom_call_ready = False
         self.laser_call_ready = False
@@ -20,6 +23,7 @@ class State:
         self.x = 0
         self.y = 0
         self.z = 0
+        self.state[self.y][self.x] = 1
         self.precision = precision
         self.max_range = 30
         self.is_new = True
@@ -67,8 +71,9 @@ class State:
 
         # Checks if the matrix has expanded
         # and / or if it is safe to expand
-        if(self.expand_state(y,x)):
+        if(self.expand_state(y-1,x-1) and self.expand_state(y+1,x+1)):
             for i in range (10):
+                # Set as explored
                 state_value = self.state[int(y + i * np.sin(self.z))][int(x + -i * np.cos(self.z))]
                 if (state_value == 2):
                     break
@@ -120,6 +125,10 @@ class State:
 
             plot_y = odom_y + adjust_y
 
+            while State.lock:
+                print("Laser is locked out")
+
+
             if (self.max_range > np.abs(adjust_x) and
                 self.max_range > np.abs(adjust_y)):
                 if (self.expand_state(plot_y, plot_x)):
@@ -142,6 +151,7 @@ class State:
         :return: True if the x and y are valid, or has expanded to accommodate them.
                  False if another process is expanding the state already
         """
+        lock = True
         y = int(y)
         x = int(x)
 
@@ -175,6 +185,8 @@ class State:
                 self.state = np.concatenate((self.state, np.zeros((self.state.shape[0], 1), float)), axis=1)
             # Unlock the method
             self.is_ready = True
+            lock = False
             return True
         else:
+            lock = False
             return False

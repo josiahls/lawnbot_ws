@@ -3,6 +3,8 @@ from __future__ import print_function
 import numpy as np
 import rospy
 
+from State import State
+
 
 class LawnBotProblem(object):
     """The abstract class for a formal problem.  You should subclass
@@ -18,16 +20,17 @@ class LawnBotProblem(object):
         self.initial = initial
         self.goal = goal
         self.state_space = state_space
+        self.action_padding = 4
 
     def actions(self, state):
         """Return the actions that can be executed in the given
         state. The result would typically be a list, but if there are
         many actions, consider yielding them one at a time in an
         iterator, rather than building them all at once."""
-        print("actions being called")
+        #print("actions being called")
 
-        rospy.loginfo("Actions:state: %s", str((state[0], state[1])))
-        rospy.loginfo("Actions:state space: %s", str(self.state_space.shape))
+        #rospy.loginfo("Actions:state: %s", str((state[0], state[1])))
+        #rospy.loginfo("Actions:state space: %s", str(self.state_space.shape))
         actions = np.asarray([[0, 0]], int)
         for i in range(1, 360, 45):
             adjust_y = int(np.around(np.sin(np.deg2rad(i))))
@@ -38,19 +41,36 @@ class LawnBotProblem(object):
 
             #rospy.loginfo("Actions: x %s y %s for i %s", str(adjust_x),str(adjust_y), i)
 
+            while State.lock:
+                pass
+
             if self.is_valid(new_y, new_x):
-                action = np.array([[adjust_y, adjust_x]], int)
-                # print (str(actions.shape) + " " + str(action.shape))
-                # rospy.loginfo("Actions %s y: %s x: %s for shape: %s", actions, str(state[0] + action[0][0]), str(state[1] + action[0][1]), self.state_space.shape)
-                #self.state_space[state[0] + action[0][0]][state[1] + action[0][1]] = 3
+                still_valid = True
 
-                # rospy.loginfo("Actions %s concating action %s", actions.shape, action.shape)
-                actions = np.concatenate((actions, action))
-                # rospy.loginfo("Actions %s y: %s x: %s", actions, str(state[0] + action[0][1]), state[1] + action[0][1])
+                for j in range(1, 360, 15):
+                    for k in range(1, self.action_padding):
+                        test_y = new_y + int(k * (np.sin(np.deg2rad(j))))
+                        test_x = new_x + int(k * (np.cos(np.deg2rad(j))))
+                        #rospy.loginfo("Testing Action: y %s and x %s", test_y, test_x)
+                        if not self.is_valid(test_y, test_x):
+                            still_valid = False
+                            break
+
+                if still_valid:
+                    action = np.array([[adjust_y, adjust_x]], int)
+                    # print (str(actions.shape) + " " + str(action.shape))
+                    # rospy.loginfo("Actions %s y: %s x: %s for shape: %s", actions, str(state[0] + action[0][0]), str(state[1] + action[0][1]), self.state_space.shape)
+                    #self.state_space[state[0] + action[0][0]][state[1] + action[0][1]] = 3
+
+                    # rospy.loginfo("Actions %s concating action %s", actions.shape, action.shape)
+                    actions = np.concatenate((actions, action))
+                    # rospy.loginfo("Actions %s y: %s x: %s", actions, str(state[0] + action[0][1]), state[1] + action[0][1])
+                else:
+                    pass#rospy.loginfo("Action to close to a wall or something y: %s x: %s", test_y, test_x)
             else:
-                rospy.loginfo("Action Not Valid y: %s x: %s", new_y, new_x)
+                pass#rospy.loginfo("Action Not Valid y: %s x: %s", new_y, new_x)
 
-        #rospy.loginfo("Actions: %s shape %s", str(actions), actions.shape)
+        rospy.loginfo("Actions: %s shape %s", str(actions), actions.shape)
         return actions
 
     def is_valid(self, new_y, new_x):
@@ -88,10 +108,10 @@ class LawnBotProblem(object):
         rospy.loginfo("The state space value is: %s", self.state_space[state[0]][state[1]])
         try:
             if self.state_space[state[0]][state[1]] == self.goal:
-                rospy.loginfo("Reached goal state of: %s", self.state_space[state[0]][state[1]])
+                #rospy.loginfo("Reached goal state of: %s", self.state_space[state[0]][state[1]])
                 return True
         except IndexError:
-            print("Index Error, not goal")
+            pass#print("Index Error, not goal")
 
         return False
 
