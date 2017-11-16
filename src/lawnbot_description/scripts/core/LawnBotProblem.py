@@ -33,6 +33,10 @@ class LawnBotProblem(object):
         #rospy.loginfo("Actions:state space: %s", str(self.state_space.shape))
         actions = np.asarray([[0, 0]], int)
         for i in range(1, 360, 45):
+            while State.lock:
+                #print("State is locked")
+                pass
+
             adjust_y = int(np.around(np.sin(np.deg2rad(i))))
             adjust_x = int(np.around(np.cos(np.deg2rad(i))))
 
@@ -40,9 +44,6 @@ class LawnBotProblem(object):
             new_x = state[1] + adjust_x
 
             #rospy.loginfo("Actions: x %s y %s for i %s", str(adjust_x),str(adjust_y), i)
-
-            while State.lock:
-                pass
 
             if self.is_valid(new_y, new_x):
                 still_valid = True
@@ -70,15 +71,15 @@ class LawnBotProblem(object):
             else:
                 pass#rospy.loginfo("Action Not Valid y: %s x: %s", new_y, new_x)
 
-        rospy.loginfo("Actions: %s shape %s", str(actions), actions.shape)
+        #rospy.loginfo("Actions: %s shape %s", str(actions), actions.shape)
         return actions
 
     def is_valid(self, new_y, new_x):
-        if new_y >= self.state_space.shape[0]:
-            #rospy.loginfo("is_valid: y is %s while state space y is %s", new_y, self.state_space.shape[0])
+        if new_y >= self.state_space.state.shape[0]:
+            #rospy.loginfo("is_valid: y is %s while state space y is %s", new_y, self.state_space.state.shape[0])
             return False
-        if new_x >= self.state_space.shape[1]:
-            #rospy.loginfo("is_valid: x is %s while state space x is %s", new_x, self.state_space.shape[1])
+        if new_x >= self.state_space.state.shape[1]:
+            #rospy.loginfo("is_valid: x is %s while state space x is %s", new_x, self.state_space.state.shape[1])
             return False
         if new_y < 0:
             #rospy.loginfo("is_valid: y is %s it cant be negative", new_y)
@@ -86,7 +87,7 @@ class LawnBotProblem(object):
         if new_x < 0:
             #rospy.loginfo("is_valid: x is %s it cant be negative", new_x)
             return False
-        if self.state_space[new_y][new_x] == 2:
+        if self.state_space.state[new_y][new_x] == 2:
             #rospy.loginfo("is_valid: x is %s y is %s cant be a wall", new_x, new_y)
             return False
 
@@ -105,9 +106,9 @@ class LawnBotProblem(object):
         state to self.goal or checks for state in self.goal if it is a
         list, as specified in the constructor. Override this method if
         checking against a single self.goal is not enough."""
-        rospy.loginfo("The state space value is: %s", self.state_space[state[0]][state[1]])
+        #rospy.loginfo("The state space value is: %s", self.state_space.state[state[0]][state[1]])
         try:
-            if self.state_space[state[0]][state[1]] == self.goal:
+            if self.state_space.state[state[0]][state[1]] == self.goal:
                 #rospy.loginfo("Reached goal state of: %s", self.state_space[state[0]][state[1]])
                 return True
         except IndexError:

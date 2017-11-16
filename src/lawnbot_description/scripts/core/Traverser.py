@@ -21,62 +21,68 @@ class Traverser(object):
 
         cmd_move = Twist()
         cmd_turn = Twist()
+        """
+        rospy.loginfo("Scanning Environment ")
+        for i in range(1, 360, 20):
+            cmd_turn.angular.z = i * 0.0023
+            move_publisher.publish(cmd_turn)
+            sleep(.3)
+        """
+        last_x = state.x
+        last_y = state.y
 
-        direction = 1
-        last_x = -1
-        last_y = -1
-
+        index = 0
         for node in nodes:
+            if index > 1:
+                break
+
+            index += 1
             current_y = state.y
             current_x = state.x
-            current_z = state.z
+            current_z = -1 * state.z
 
-            rospy.loginfo("Traversing new node %s", node.state)
+            # If the state is expanding, then that means that
+            # the target is out of date
+            if State.lock:
+                rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
+                break
 
-            dest_y = state.y_offset + node.state[0]
-            dest_x = state.x_offset + node.state[1]
+            dest_y = node.state[0]
+            dest_x = node.state[1]
+
+            rospy.loginfo("Traversing from y %s x %s", current_y, current_x)
+            rospy.loginfo("Traversing new node %s y %s x %s", node.state, dest_y, dest_x)
 
             if (last_x or last_y == -1):
                 last_x = dest_x
                 last_y = dest_y
-            else:
-                if dest_y - last_y >= 0:
-                    direction = 1
-                else:
-                    direction = -1
 
+            dest_angle = np.arctan2(dest_y - current_y, dest_x - current_x)
 
-            rise_over_run = (current_y - dest_y) / (current_x - dest_x)
-            dest_angle = np.arctan(rise_over_run)
-
-            while abs(dest_angle - current_z) > .2:
-
-                while State.lock:
-                    print("Locked")
+            while abs(dest_angle + current_z) > .1 and (dest_y != current_y or
+                                                            dest_x != current_x):
 
                 current_y = state.y
                 current_x = state.x
-                current_z = state.z
+                current_z = -1 * state.z
 
-                dest_y = state.y_offset + node.state[0]
-                dest_x = state.x_offset + node.state[1]
+                dest_y = node.state[0]
+                dest_x = node.state[1]
 
-                dest_angle = np.arctan2(current_y - dest_y, current_x - dest_x)
-                dest_angle = dest_angle * direction
+                dest_angle = np.arctan2(dest_y - current_y, dest_x - current_x)
 
-                rospy.loginfo("Traversing angle by %s to z %s", dest_angle, current_z)
-                rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",
-                              current_x, current_y, dest_x, dest_y)
+                rospy.loginfo("Traversing angle by %s to z %s", np.rad2deg(dest_angle), np.rad2deg(current_z))
+                #rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
 
-                if (abs(dest_angle - current_z) < .2):
+                if (abs(dest_angle + current_z) < .1):
                     #cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
                     sleep(1)
                     cmd_move.linear.x = .5
-                    rospy.loginfo("Traversing x by %s", cmd_move.linear.x)
+                    #rospy.loginfo("Traversing x by %s", cmd_move.linear.x)
                     #move_publisher.publish(cmd_move)
                     #sleep(.1)
                 else:
-                    cmd_turn.angular.z = dest_angle - current_z
+                    cmd_turn.angular.z = dest_angle + current_z
                     move_publisher.publish(cmd_turn)
                     sleep(.1)
                 sleep(.2)
