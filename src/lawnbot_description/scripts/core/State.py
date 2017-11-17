@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import numpy as np
+from time import sleep
 
 import rospy
 from nav_msgs.msg import Odometry
@@ -116,7 +117,7 @@ class State:
             if (self.expand_state(plot_y, plot_x)):
                 self.state[plot_y][plot_x] = 2
         '''
-
+        #rospy.loginfo("State:laser_callback: adjusted z orientation: %s", np.rad2deg(self.z))
         #for i in range(len(self.ranges)/2-1, len(self.ranges)/2):
         for i in range(len(self.ranges)/2-14, len(self.ranges)/2+14):
             angle = i - len(self.ranges)/2-1
@@ -124,7 +125,6 @@ class State:
             #rospy.loginfo("State:laser_callback: range: %s at slot %s", self.ranges[i],i)
             #rospy.loginfo("State:laser_callback: adjusted x range: %s", self.ranges[i] * np.cos(0 * scan.angle_increment + self.z) * self.precision)
             #rospy.loginfo("State:laser_callback: adjusted y range: %s", self.ranges[i] * np.sin(0 * scan.angle_increment + self.z) * self.precision)
-            #rospy.loginfo("State:laser_callback: adjusted z orientation: %s",self.z)
             #rospy.loginfo("State:laser_callback: scan angle increment: %s", scan.angle_increment)
             #rospy.loginfo("State:laser_callback: max angle %s, min: %s", scan.angle_max, scan.angle_min)
             adjust_x = self.ranges[i] * np.cos(angle * scan.angle_increment + self.z) * self.precision
