@@ -49,9 +49,15 @@ class Traverser(object):
 
             rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
             rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
-            rospy.loginfo("Traversing angle by %s to z %s", np.rad2deg(self.dest_angle), np.rad2deg(self.current_z))
+
+            try:
+                self.dest_angle
+            except:
+                continue
+
+            rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
             while abs(self.dest_angle - self.current_z) > .1:
-                rospy.loginfo("Traversing angle by %s to z %s", np.rad2deg(self.dest_angle), np.rad2deg(self.current_z))
+                rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
                 self.update(node, state)
 
 
@@ -65,10 +71,23 @@ class Traverser(object):
                     #move_publisher.publish(cmd_move)
                     #sleep(.1)
                 else:
-                    if (self.dest_angle - self.current_z < 0):
-                        cmd_turn.angular.z = .5
+                    if (abs(self.dest_angle - self.current_z) >= 4):
+                        rospy.loginfo("Traversing setting velocity")
+                        if (self.dest_angle - self.current_z < 0):
+                            cmd_turn.angular.z = .5
+                        else:
+                            cmd_turn.angular.z = -.5
+                    elif(abs(self.dest_angle - self.current_z) >= 1):
+                        # Reduce angler velocity
+                        rospy.loginfo("Traversing reducing velocity")
+                        cmd_turn.angular.z = -.3 if cmd_turn.angular.z < 0 else .3
                     else:
-                        cmd_turn.angular.z = -.5
+                        # Reduce angler velocity
+                        rospy.loginfo("Traversing reducing velocity")
+                        cmd_turn.angular.z = -.2 if cmd_turn.angular.z < 0 else .2
+
+
+
                     move_publisher.publish(cmd_turn)
                     sleep(.1)
                 sleep(.2)
@@ -78,21 +97,52 @@ class Traverser(object):
     def update(self, node, state):
         self.current_y = state.y
         self.current_x = state.x
-        self.current_z = -1 * state.z
+        self.current_z = state.z
 
-        if (node.state[0] != self.last_y and
-            node.state[1] != self.last_x and
-            node.state[0] != self.dest_y and
-            node.state[1] != self.dest_x):
+        rospy.loginfo("Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",
+                      node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
+
+        # if the last and destination are the same
+        # and the current x y is not the last destination
+        # try to make the last one the current location
+        # so that the agent will try to move on track
+        if (self.last_x == self.dest_x and
+            self.last_y == self.dest_y and
+            self.last_x != self.current_x and
+            self.last_y != self.current_y):
+            self.last_x = self.current_x
+            self.last_y = self.current_y
+
+        # if the destination is not the goal location
+        # then make it the goal location
+        # and move the previous destination back
+        if (self.dest_y != node.state[0] and
+            self.dest_x != node.state[1]):
             self.last_y = self.dest_y
             self.last_x = self.dest_x
             self.dest_y = node.state[0]
             self.dest_x = node.state[1]
 
-        self.dest_angle = np.arctan2(self.dest_y - self.last_y,
-                                self.dest_x - self.last_x)
+        # If the points are different, change the angle
+        if (self.last_x != self.dest_x or self.last_y != self.dest_y):
+            rospy.loginfo("Adjusting Angle Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",
+                          node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
+            adjustment = -1 * np.pi
+            # Note these are flipped because the graph directions are flipped
+            quad_y = self.last_y - self.dest_y
+            quad_x = self.last_x - self.dest_x
 
-        if self.dest_angle > 0:
-            self.dest_angle -= np.deg2rad(180)
-        else:
-            self.dest_angle += np.deg2rad(180)
+            if (quad_y > 0 and quad_x < 0):
+                adjustment = 0
+            elif (quad_y < 0 and quad_x < 0):
+                adjustment = 0
+            elif (quad_y < 0 and quad_x > 0):
+                adjustment = np.pi
+
+
+
+
+
+
+
+            self.dest_angle = np.arctan2(quad_y,quad_x) + adjustment
