@@ -60,8 +60,7 @@ class Driver:
 
         while not rospy.is_shutdown():
 
-            problem  = LawnBotProblem(initial=np.array([state.y, state.x],int),
-                                      goal=0, state_space=state)
+            problem  = LawnBotProblem(initial=np.array([state.y, state.x],int), goal=0, state_space=state)
 
             searcher = UninformedSearch()
             node = searcher.graph_search(problem)

@@ -34,100 +34,111 @@ class Traverser(object):
             move_publisher.publish(cmd_turn)
             sleep(.3)
         """
+
+        starting_index = self.get_closest_node(nodes, state)
+
         self.last_x = state.x
         self.last_y = state.y
         self.dest_x = state.x
         self.dest_y = state.y
 
-        index = 0
+        index = -1
         for node in nodes:
-            if index > 2:
-                break
-
             index += 1
-
-            self.update(node, state)
-            # If the state is expanding, then that means that
-            # the target is out of date
-            if State.lock:
-                rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
-                break
-
-            rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
-            rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
-
-            try:
-                self.dest_angle
-            except:
-                continue
-
-            rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
-            location_reached = False
-            while abs(self.dest_angle - self.current_z) > .1 or not location_reached:
-                rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
+            if (index >= starting_index):
                 self.update(node, state)
+                # If the state is expanding, then that means that
+                # the target is out of date
+                if State.lock:
+                    rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
+                    break
 
-                #rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
+                rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
+                rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
 
-                if (abs(self.dest_angle - self.current_z) <= .1 and not location_reached):
-                    #cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
+                try:
+                    self.dest_angle
+                except:
+                    continue
 
-                    rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
-                    sleep(.2)
-                    max = self.max
-                    while self.max <= max:
+                # rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
+                location_reached = False
+                while abs(self.dest_angle - self.current_z) > .1 or not location_reached:
+                    # rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
+                    self.update(node, state)
+
+                    # rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
+
+                    if (abs(self.dest_angle - self.current_z) <= .1 and not location_reached):
+                        # cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
+
+                        # rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
                         max = self.max
-                        self.cmd_move.linear.x = .1
-                        rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
-                        move_publisher.publish(self.cmd_move)
-                        self.update(node, state)
-                        sleep(.1)
-                    location_reached = True
+                        while self.max <= max:
+                            max = self.max
+                            self.cmd_move.linear.x = .2
+                            move_publisher.publish(self.cmd_move)
+                            self.update(node, state)
+                            # rospy.loginfo("Traversing x by %s where max is %s and self.max is %s", self.cmd_move.linear.x, max, self.max)
+                        location_reached = True
+                    else:
+                        self.cmd_turn.angular.z = self.get_angle()
+                        move_publisher.publish(self.cmd_turn)
                 else:
-                    self.cmd_turn.angular.z = self.get_angle()
-                    move_publisher.publish(self.cmd_turn)
-                    sleep(.1)
-                sleep(.2)
-        sleep(3)
+                    rospy.loginfo("Traverser:call_move: skipping index %s", index)
 
     def get_angle(self):
         angle = 0
 
-        if  (self.dest_angle - self.current_z < 0):
-            angle = -.5
-        else:
+        if (np.rad2deg(self.dest_angle) - np.rad2deg(self.current_z) > 0):
             angle = .5
+        else:
+            angle = -.5
 
-
-        if (abs(self.dest_angle - self.current_z) < .4 and self.cmd_turn.angular.z > .2):
+        if (abs(self.dest_angle - self.current_z) < .4 and abs(self.cmd_turn.angular.z) > .2):
             angle = self.cmd_turn.angular.z * .999
-            rospy.loginfo("Traverser:get_angle: adjusting angle: %s", angle)
+            # rospy.loginfo("Traverser:get_angle: adjusting angle: %s", angle)
 
         return angle
 
+    def get_closest_node(self, nodes, state):
 
+        closest_node_distance = 0
+        closest_node_index = 0
+        node_index = 0
 
+        for node in nodes:
+            distance = np.sqrt(np.power(node.state[1] - state.x, 2) + np.power(node.state[0] - state.y, 2))
+            if node_index == 0:
+                closest_node_distance = distance
+                # Node is too far away to safely blindly traverse
+                if closest_node_distance > 3:
+                    closest_node_index = -1
+                    break
+            elif (distance < closest_node_distance):
+                closest_node_distance = distance
+                closest_node_index = node_index
+            node_index += 1
 
+        return closest_node_index
 
     def update(self, node, state):
         self.current_y = state.y
         self.current_x = state.x
         self.current_z = state.z
 
-        rospy.loginfo("Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",
-                      node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
+        # rospy.loginfo("Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s", node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
 
-        self.max = np.linalg.norm(
-            (np.array((self.current_x, self.current_y, 0)), np.array((self.dest_x, self.dest_y, 0))))
+        self.max = np.sqrt(np.power(self.current_x - self.dest_x, 2) + np.power(self.current_y - self.dest_y, 2))
 
         # if the last and destination are the same
         # and the current x y is not the last destination
         # try to make the last one the current location
         # so that the agent will try to move on track
         if (self.last_x == self.dest_x and
-            self.last_y == self.dest_y and
-            self.last_x != self.current_x and
-            self.last_y != self.current_y):
+                    self.last_y == self.dest_y and
+                    self.last_x != self.current_x and
+                    self.last_y != self.current_y):
             self.last_x = self.current_x
             self.last_y = self.current_y
 
@@ -135,7 +146,7 @@ class Traverser(object):
         # then make it the goal location
         # and move the previous destination back
         if (self.dest_y != node.state[0] or
-            self.dest_x != node.state[1]):
+                    self.dest_x != node.state[1]):
             self.last_y = self.dest_y
             self.last_x = self.dest_x
             self.dest_y = node.state[0]
@@ -143,15 +154,15 @@ class Traverser(object):
 
         # If the points are different, change the angle
         if (self.last_x != self.dest_x or self.last_y != self.dest_y):
-            #rospy.loginfo("Adjusting Angle Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
+            # rospy.loginfo("Adjusting Angle Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
             # Note these are flipped because the graph directions are flipped
             quad_y = self.dest_y - self.last_y
             quad_x = self.dest_x - self.last_x
 
-            #quad_y = -1
-            #quad_x = 1
+            # quad_y = -1
+            # quad_x = 1
 
-            rospy.loginfo("Traverser:update:quad_y %s quad_x: %s", quad_y, quad_x)
+            # rospy.loginfo("Traverser:update:quad_y %s quad_x: %s", quad_y, quad_x)
 
             # Quadrant 2
             if (quad_y > 0 and quad_x < 0):
@@ -162,7 +173,7 @@ class Traverser(object):
             elif (quad_y < 0 and quad_x > 0):
                 self.dest_angle = np.arctan2(quad_y, quad_x) - np.pi / 2
             else:
-                self.dest_angle = np.arctan2(quad_y, quad_x) + np.pi /2
+                self.dest_angle = np.arctan2(quad_y, quad_x) + np.pi / 2
 
             # If the generated quadrant in more than a full circle
             if abs(self.dest_angle) > np.pi:
@@ -177,7 +188,3 @@ class Traverser(object):
                 self.dest_angle = 0
             if quad_y == 0 and quad_x > 0:
                 self.dest_angle = np.pi
-
-
-
-
