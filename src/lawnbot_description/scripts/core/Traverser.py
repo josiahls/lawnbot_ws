@@ -10,17 +10,23 @@ from State import State
 
 
 class Traverser(object):
+    """
+    I found this URL useful for localizing angles:
+    <a>http://edspi31415.blogspot.com/2013/11/atan2-using-tan-1-and-anglearg-various.html </a>
+    """
+
     def call_starting_move(self, state, move_publisher=rospy.Publisher):
-        cmd_turn = Twist()
+
+        self.cmd_turn = Twist()
         current_z = state.z
-        cmd_turn.angular.z = 4
-        move_publisher.publish(cmd_turn)
+        self.cmd_turn.angular.z = 4
+        move_publisher.publish(self.cmd_turn)
         sleep(1.5)
 
     def call_move(self, nodes, state, move_publisher=rospy.Publisher):
 
-        cmd_move = Twist()
-        cmd_turn = Twist()
+        self.cmd_move = Twist()
+        self.cmd_turn = Twist()
         """
         rospy.loginfo("Scanning Environment ")
         for i in range(1, 360, 20):
@@ -56,42 +62,51 @@ class Traverser(object):
                 continue
 
             rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
-            while abs(self.dest_angle - self.current_z) > .1:
+            location_reached = False
+            while abs(self.dest_angle - self.current_z) > .1 or not location_reached:
                 rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
                 self.update(node, state)
 
-
                 #rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
 
-                if (abs(self.dest_angle - self.current_z) < .1):
+                if (abs(self.dest_angle - self.current_z) <= .1 and not location_reached):
                     #cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
-                    sleep(1)
-                    cmd_move.linear.x = .1
-                    #rospy.loginfo("Traversing x by %s", cmd_move.linear.x)
-                    #move_publisher.publish(cmd_move)
-                    #sleep(.1)
+
+                    rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
+                    sleep(.2)
+                    max = self.max
+                    while self.max <= max:
+                        max = self.max
+                        self.cmd_move.linear.x = .1
+                        rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
+                        move_publisher.publish(self.cmd_move)
+                        self.update(node, state)
+                        sleep(.1)
+                    location_reached = True
                 else:
-                    if (abs(self.dest_angle - self.current_z) >= 4):
-                        rospy.loginfo("Traversing setting velocity")
-                        if (self.dest_angle - self.current_z < 0):
-                            cmd_turn.angular.z = .5
-                        else:
-                            cmd_turn.angular.z = -.5
-                    elif(abs(self.dest_angle - self.current_z) >= 1):
-                        # Reduce angler velocity
-                        rospy.loginfo("Traversing reducing velocity")
-                        cmd_turn.angular.z = -.3 if cmd_turn.angular.z < 0 else .3
-                    else:
-                        # Reduce angler velocity
-                        rospy.loginfo("Traversing reducing velocity")
-                        cmd_turn.angular.z = -.2 if cmd_turn.angular.z < 0 else .2
-
-
-
-                    move_publisher.publish(cmd_turn)
+                    self.cmd_turn.angular.z = self.get_angle()
+                    move_publisher.publish(self.cmd_turn)
                     sleep(.1)
                 sleep(.2)
         sleep(3)
+
+    def get_angle(self):
+        angle = 0
+
+        if  (self.dest_angle - self.current_z < 0):
+            angle = -.5
+        else:
+            angle = .5
+
+
+        if (abs(self.dest_angle - self.current_z) < .4 and self.cmd_turn.angular.z > .2):
+            angle = self.cmd_turn.angular.z * .999
+            rospy.loginfo("Traverser:get_angle: adjusting angle: %s", angle)
+
+        return angle
+
+
+
 
 
     def update(self, node, state):
@@ -101,6 +116,9 @@ class Traverser(object):
 
         rospy.loginfo("Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",
                       node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
+
+        self.max = np.linalg.norm(
+            (np.array((self.current_x, self.current_y, 0)), np.array((self.dest_x, self.dest_y, 0))))
 
         # if the last and destination are the same
         # and the current x y is not the last destination
@@ -116,7 +134,7 @@ class Traverser(object):
         # if the destination is not the goal location
         # then make it the goal location
         # and move the previous destination back
-        if (self.dest_y != node.state[0] and
+        if (self.dest_y != node.state[0] or
             self.dest_x != node.state[1]):
             self.last_y = self.dest_y
             self.last_x = self.dest_x
@@ -125,24 +143,41 @@ class Traverser(object):
 
         # If the points are different, change the angle
         if (self.last_x != self.dest_x or self.last_y != self.dest_y):
-            rospy.loginfo("Adjusting Angle Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",
-                          node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
-            adjustment = -1 * np.pi
+            #rospy.loginfo("Adjusting Angle Node y: %s x: %s Last: y: %s x: %s Dest: y: %s x: %s",node.state[0], node.state[1], self.last_y, self.last_x, self.dest_y, self.dest_x)
             # Note these are flipped because the graph directions are flipped
-            quad_y = self.last_y - self.dest_y
-            quad_x = self.last_x - self.dest_x
+            quad_y = self.dest_y - self.last_y
+            quad_x = self.dest_x - self.last_x
 
+            #quad_y = -1
+            #quad_x = 1
+
+            rospy.loginfo("Traverser:update:quad_y %s quad_x: %s", quad_y, quad_x)
+
+            # Quadrant 2
             if (quad_y > 0 and quad_x < 0):
-                adjustment = 0
+                self.dest_angle = np.arctan2(quad_y, quad_x) + np.pi / 2
             elif (quad_y < 0 and quad_x < 0):
-                adjustment = 0
+                self.dest_angle = np.arctan2(quad_y, quad_x) + np.pi / 2
+            # Quadrant 4
             elif (quad_y < 0 and quad_x > 0):
-                adjustment = np.pi
+                self.dest_angle = np.arctan2(quad_y, quad_x) - np.pi / 2
+            else:
+                self.dest_angle = np.arctan2(quad_y, quad_x) + np.pi /2
+
+            # If the generated quadrant in more than a full circle
+            if abs(self.dest_angle) > np.pi:
+                self.dest_angle = self.dest_angle - np.pi if self.dest_angle > np.pi else self.dest_angle + np.pi
+
+            # If any of the coordinates are 0, handle this
+            if quad_x == 0 and quad_y < 0:
+                self.dest_angle = - np.pi / 2
+            if quad_x == 0 and quad_y > 0:
+                self.dest_angle = np.pi / 2
+            if quad_y == 0 and quad_x < 0:
+                self.dest_angle = 0
+            if quad_y == 0 and quad_x > 0:
+                self.dest_angle = np.pi
 
 
 
 
-
-
-
-            self.dest_angle = np.arctan2(quad_y,quad_x) + adjustment
