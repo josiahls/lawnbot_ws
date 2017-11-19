@@ -35,6 +35,7 @@ class Traverser(object):
             sleep(.3)
         """
 
+        self.clean_node_path(nodes, state)
         starting_index = self.get_closest_node(nodes, state)
 
         self.last_x = state.x
@@ -50,11 +51,11 @@ class Traverser(object):
                 # If the state is expanding, then that means that
                 # the target is out of date
                 if State.lock:
-                    rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
+                    #rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
                     break
 
-                rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
-                rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
+                #rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
+                #rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
 
                 try:
                     self.dest_angle
@@ -74,11 +75,13 @@ class Traverser(object):
 
                         # rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
                         max = self.max
+                        counter = 0
                         while self.max <= max:
                             max = self.max
-                            self.cmd_move.linear.x = .2
+                            self.cmd_move.linear.x = .2 if counter != 1000 else -.6
                             move_publisher.publish(self.cmd_move)
                             self.update(node, state)
+                            counter += 1
                             # rospy.loginfo("Traversing x by %s where max is %s and self.max is %s", self.cmd_move.linear.x, max, self.max)
                         location_reached = True
                     else:
@@ -87,19 +90,58 @@ class Traverser(object):
                 else:
                     rospy.loginfo("Traverser:call_move: skipping index %s", index)
 
-    def get_angle(self):
-        angle = 0
+    def back_out(self, move_publisher=rospy.Publisher):
+        self.cmd_move.linear.x = -.6
+        move_publisher.publish(self.cmd_move)
 
-        if (np.rad2deg(self.dest_angle) - np.rad2deg(self.current_z) > 0):
+    def get_angle(self):
+        #rospy.loginfo("Traverser:get_angle: dest angle %s current angle %s", np.rad2deg(self.dest_angle),
+                      #np.rad2deg(self.current_z))
+
+        dest_x = 1 * np.cos(self.dest_angle)
+        dest_y = 1 * np.sin(self.dest_angle)
+
+        start_x = 1 * np.cos(self.current_z + .5)
+        start_y = 1 * np.sin(self.current_z + .5)
+        d1 = np.sqrt(np.power(dest_x - start_x, 2) + np.power(dest_y - start_y, 2))
+
+        start_x = 1 * np.cos(self.current_z - .5)
+        start_y = 1 * np.sin(self.current_z - .5)
+        d2 = np.sqrt(np.power(dest_x - start_x, 2) + np.power(dest_y - start_y, 2))
+
+        if (d1 <= d2):
             angle = .5
         else:
             angle = -.5
 
-        if (abs(self.dest_angle - self.current_z) < .4 and abs(self.cmd_turn.angular.z) > .2):
+        if (abs(self.dest_angle - self.current_z) * 10 < .4 and abs(self.cmd_turn.angular.z) > .2):
             angle = self.cmd_turn.angular.z * .999
             # rospy.loginfo("Traverser:get_angle: adjusting angle: %s", angle)
 
         return angle
+
+    def clean_node_path(self, nodes, state):
+
+        index = 0
+        n2_index = 0
+        n1 = None
+        n2 = None
+
+        for node in nodes:
+            rospy.loginfo("Traverser:clean_node_path: going to list of nodes node")
+            if index == 0:
+                n1 = node
+            if index == 1:
+                n2 = node
+                n2_index = index
+            if index >= 2:
+                if n1 and n2 is not None:
+                    if n1.state[0] != node.state[0] and n1.state[1] != node.state[1]:
+                        rospy.loginfo("Traverser:clean_node_path: deleting node")
+                        del nodes[n2_index]
+                n1 = n2
+                n2 = node
+            index += 1
 
     def get_closest_node(self, nodes, state):
 

@@ -96,8 +96,6 @@ class State:
 
     def laser_callback(self, scan=LaserScan()):
         self.ranges = scan.ranges
-        odom_x = self.x
-        odom_y = self.y
 
         #inc = 0
         #for range in self.ranges:
@@ -130,18 +128,19 @@ class State:
 
             #rospy.loginfo("State:laser_callback: x:%s y:%s",adjust_x,adjust_y)
             # Set adjusted x and y
-            plot_x = odom_x + -1 * adjust_x
-
-            plot_y = odom_y + adjust_y
 
             while State.lock:
                 print("Laser is locked out")
 
+            plot_x = self.x + -1 * adjust_x
+            plot_y = self.y + adjust_y
+            previous_offset_x = self.x_offset
+            previous_offset_y = self.y_offset
 
             if (self.max_range > np.abs(adjust_x) and
                 self.max_range > np.abs(adjust_y)):
                 if (self.expand_state(plot_y, plot_x)):
-                    self.state[plot_y][plot_x] = 2
+                    self.state[plot_y - (previous_offset_y - self.y_offset)][plot_x - (previous_offset_x - self.x_offset)] = 2
 
         #rospy.loginfo("State:laser_callback: ranges:%s", self.ranges)
         #rospy.loginfo("State:laser_callback: angle_min:%s angle_max:%s angle_inc:%s", scan.angle_min,scan.angle_max, scan.angle_increment)

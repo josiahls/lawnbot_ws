@@ -66,21 +66,36 @@ class UninformedSearch(object):
         if problem.goal_test(node.state):
             return node
 
-
+        # Set priority queue to organize nodes
+        # in order of lowest f
         frontier = PriorityQueue(min, f)
+        # Append the first node
         frontier.append(node)
+        # Initialize empty set
         explored = set()
+        # While the frontier is empty
         while frontier:
+            # Get the first node with lowest f
             node = frontier.pop()
+            # Check if node is goal
             if problem.goal_test(node.state):
                 return node
-            explored.add(node.state)
+            # Add the state to the explored set
+            explored.add(tuple(node.state))
+            # For every child in the expanded node
             for child in node.expand(problem):
+                # If the child is not a repeat child append it
                 if child.state not in explored and child not in frontier:
                     frontier.append(child)
+                # If the child is in the frontier
+                # This statement basically just filters out children that
+                # have the same state but lower path costs
                 elif child in frontier:
+                    # Select that child
                     incumbent = frontier[child]
+                    # If one child is has a lower path cost
                     if f(child) < f(incumbent):
+                        # Remove the child that is farther
                         del frontier[incumbent]
                         frontier.append(child)
         return None

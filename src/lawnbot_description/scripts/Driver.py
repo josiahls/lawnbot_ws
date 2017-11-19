@@ -63,7 +63,8 @@ class Driver:
             problem  = LawnBotProblem(initial=np.array([state.y, state.x],int), goal=0, state_space=state)
 
             searcher = UninformedSearch()
-            node = searcher.graph_search(problem)
+            #node = searcher.graph_search(problem)
+            node = searcher.best_first_graph_search(problem, problem.f)
 
             try:
                 #print("Refreshing...")
@@ -84,12 +85,12 @@ class Driver:
             except TypeError:
                 print("State is not set yet")
 
+            traverser = Traverser()
             if node is not None:
-                traverser = Traverser()
                 traverser.call_move(node.path(), state, move_publisher)
-                sleep(2)
             else:
                 print("Node is null")
+                traverser.back_out(move_publisher)
         '''
         while not rospy.is_shutdown():
             try:
