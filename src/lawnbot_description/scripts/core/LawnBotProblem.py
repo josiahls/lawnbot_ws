@@ -17,11 +17,11 @@ class LawnBotProblem(object):
         """The constructor specifies the initial state, and possibly a goal
         state, if there is a unique goal.  Your subclass's constructor can add
         other arguments."""
-        rospy.loginfo("Initial Node: %s", str(initial))
+        # rospy.loginfo("Initial Node: %s", str(initial))
         self.initial = initial
         self.goal = goal
         self.state_space = state_space
-        self.action_padding = 4
+        self.action_padding = 3
         self.h_location = [0, 0]
         self.gen_h(initial)
 
@@ -68,7 +68,7 @@ class LawnBotProblem(object):
 
                     if still_valid:
                         action = np.array([[adjust_y, adjust_x]], int)
-                        print (str(actions.shape) + " " + str(action.shape))
+                        #print (str(actions.shape) + " " + str(action.shape))
                         # rospy.loginfo("Actions %s y: %s x: %s for shape: %s", actions, str(state[0] + action[0][0]), str(state[1] + action[0][1]), self.state_space.shape)
                         # self.state_space[state[0] + action[0][0]][state[1] + action[0][1]] = 3
                         # rospy.loginfo("Actions %s concating action %s", actions.shape, action.shape)

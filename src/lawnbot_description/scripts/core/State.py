@@ -9,6 +9,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import PointCloud
 from tf.transformations import euler_from_quaternion
+import matplotlib.pyplot as plt
 
 
 class State:
@@ -26,7 +27,7 @@ class State:
         self.z = 0
         self.state[self.y][self.x] = 1
         self.precision = precision
-        self.max_range = 15
+        self.max_range = 25
         self.is_new = True
         self.is_ready = True
         self.padding = 5
@@ -96,6 +97,10 @@ class State:
 
     def laser_callback(self, scan=LaserScan()):
         self.ranges = scan.ranges
+        sampled_x = self.x
+        sampled_y = self.y
+
+        rospy.loginfo("State:laser_callback: %s", self.ranges)
 
         #inc = 0
         #for range in self.ranges:
@@ -113,39 +118,68 @@ class State:
             if (self.expand_state(plot_y, plot_x)):
                 self.state[plot_y][plot_x] = 2
         '''
+        rospy.loginfo("NEW SET")
         #rospy.loginfo("State:laser_callback: adjusted z orientation: %s", np.rad2deg(self.z))
         #for i in range(len(self.ranges)/2-1, len(self.ranges)/2):
-        for i in range(len(self.ranges)/2-80, len(self.ranges)/2+80, 10):
+        #for i in range(len(self.ranges)/2-80, len(self.ranges)/2+80, 10):
+        #for i in range(0, len(self.ranges), 10):
+        # reducing the increment for the turtlebot
+        for i in range(0, len(self.ranges), 2):
+            #rospy.loginfo("Setting for angle %s", i)
             angle = i - len(self.ranges)/2-1
             # might use cos(i * angle_inc + odom_angleheading
-            #rospy.loginfo("State:laser_callback: range: %s at slot %s", self.ranges[i],i)
+            # rospy.loginfo("State:laser_callback: range: %s at slot %s", self.ranges[i],i)
             #rospy.loginfo("State:laser_callback: adjusted x range: %s", self.ranges[i] * np.cos(0 * scan.angle_increment + self.z) * self.precision)
             #rospy.loginfo("State:laser_callback: adjusted y range: %s", self.ranges[i] * np.sin(0 * scan.angle_increment + self.z) * self.precision)
             #rospy.loginfo("State:laser_callback: scan angle increment: %s", scan.angle_increment)
             #rospy.loginfo("State:laser_callback: max angle %s, min: %s", scan.angle_max, scan.angle_min)
+            if State.lock:
+                print("Laser is locked out")
+                break
+            if self.x != sampled_x or self.y != sampled_y:
+                print("Laser ranges are out dated. Needs to be re sampled")
+                break
+
+            #rospy.loginfo("State:laser_callback: doing angle: %s", np.rad2deg(angle * scan.angle_increment))
             adjust_x = self.ranges[i] * np.cos(angle * scan.angle_increment + self.z) * self.precision
             adjust_y = self.ranges[i] * np.sin(angle * scan.angle_increment + self.z) * self.precision
 
-            #rospy.loginfo("State:laser_callback: x:%s y:%s",adjust_x,adjust_y)
+            #adjust_x = self.ranges[i] * np.cos(angle * scan.angle_increment) * self.precision
+            #adjust_y = self.ranges[i] * np.sin(angle * scan.angle_increment) * self.precision
+
+            rospy.loginfo("State:laser_callback: x:%s y:%s with self.x %s self.y %s",
+                          adjust_x,adjust_y, self.x, self.y)
             # Set adjusted x and y
 
-            while State.lock:
-                print("Laser is locked out")
-
-            plot_x = self.x + -1 * adjust_x
-            plot_y = self.y + adjust_y
+            plot_x = int(np.around(self.x + -1 * adjust_x))
+            plot_y = int(np.around(self.y + adjust_y))
             previous_offset_x = self.x_offset
             previous_offset_y = self.y_offset
 
             if (self.max_range > np.abs(adjust_x) and
                 self.max_range > np.abs(adjust_y)):
                 if (self.expand_state(plot_y, plot_x)):
-                    self.state[plot_y - (previous_offset_y - self.y_offset)][plot_x - (previous_offset_x - self.x_offset)] = 2
-
+                    self.state[plot_y + (self.y_offset - previous_offset_y)][plot_x - (self.x_offset - previous_offset_x)] = 2
+            #sleep(.5)
         #rospy.loginfo("State:laser_callback: ranges:%s", self.ranges)
         #rospy.loginfo("State:laser_callback: angle_min:%s angle_max:%s angle_inc:%s", scan.angle_min,scan.angle_max, scan.angle_increment)
 
+    def turtle_laser_callback(self, scan=LaserScan()):
+        self.ranges = scan.ranges
+        sampled_x = self.x
+        sampled_y = self.y
+        sampled_z = self.z
 
+        #rospy.loginfo("State:laser_callback: %s", self.ranges)
+
+        #for i in range(0, len(self.ranges), 2):
+        rospy.loginfo("State:turtle_laser_callback: x %s y %s z %s", sampled_x, sampled_y, sampled_z)
+
+        for i in range(len(self.ranges) / 2, len(self.ranges) / 2+1):
+            rospy.loginfo("State:turtle_laser_callback: range i %s at distance: %s", i, self.ranges[i])
+            pass
+
+        sleep(.5)
 
     def expand_state(self, y, x):
         """
@@ -195,8 +229,9 @@ class State:
                     rospy.loginfo("State:odom_callback: Expanding in the x direction by %s", x - self.state.shape[1])
                     self.state = np.concatenate((self.state, np.zeros((self.state.shape[0], 1), float)), axis=1)
             # Unlock the method
+            temp = State.lock
             State.lock = False
-            return True
+            return temp
         else:
             rospy.loginfo("State:expand: state is locked")
             State.lock = False

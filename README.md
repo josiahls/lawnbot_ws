@@ -42,6 +42,7 @@
 	    <li>"Check if paths are correct: " echo $ROS_PACKAGE_PATH</li>
             <li>"If there are chenges to any of the sources: "catkin_make -DCMAKE_BUILD_TYPE=Release</li>
 	    <li>"If you add a new package: " catkin_make --force-cmake</li>
+	    <li> as of 12/2, you need to add a node_plugins.xml for gmapping to work. </li> 
         </ol>
         <p><b>File Structure: </b></p>
         <a>http://gazebosim.org/tutorials?tut=ros_roslaunch</a>
@@ -94,6 +95,8 @@
             <li>source devel/setup.bash </li>
             <li>rosrun gazebo_ros spawn_model -file `rospack find ROBOT_descripsourcrtion`/urdf/ROBOTNAME.urdf -urdf -z 1 -model ROBOTNAME </li>
             <li>roslaunch jackal_viz view_robot.launch or roslaunch turtlebot_rviz_launchers view_robot.launch</li>
+            <li>To launch turtlebot: roslaunch turtlebot_gazebo turtlebot_world.launch 
+            world_file:=/home/josiah/PycharmProjects/lawnbot_ws/src/lawnbot_gazebo/worlds/slam_vision_test.world</li>
         </ol>
     </p>
     <h5>

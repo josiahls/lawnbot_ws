@@ -15,6 +15,9 @@ class Traverser(object):
     <a>http://edspi31415.blogspot.com/2013/11/atan2-using-tan-1-and-anglearg-various.html </a>
     """
 
+    def __init__(self):
+        self.max_node_path_length = 5
+
     def call_starting_move(self, state, move_publisher=rospy.Publisher):
 
         self.cmd_turn = Twist()
@@ -46,12 +49,15 @@ class Traverser(object):
         index = -1
         for node in nodes:
             index += 1
-            if (index >= starting_index):
+            if (index >= starting_index and index < (self.max_node_path_length + starting_index)):
                 self.update(node, state)
                 # If the state is expanding, then that means that
                 # the target is out of date
                 if State.lock:
                     #rospy.loginfo("Traverser:call_move state is locked, nodes are invalid")
+                    break
+
+                if state.state[node.state[0]][node.state[1]] == 2:
                     break
 
                 #rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
@@ -87,11 +93,12 @@ class Traverser(object):
                     else:
                         self.cmd_turn.angular.z = self.get_angle()
                         move_publisher.publish(self.cmd_turn)
-                else:
-                    rospy.loginfo("Traverser:call_move: skipping index %s", index)
+            else:
+                pass#rospy.loginfo("Traverser:call_move: skipping index %s", index)
 
     def back_out(self, move_publisher=rospy.Publisher):
-        self.cmd_move.linear.x = -.6
+        self.cmd_move = Twist()
+        self.cmd_move.linear.x = -.2
         move_publisher.publish(self.cmd_move)
 
     def get_angle(self):
@@ -128,7 +135,7 @@ class Traverser(object):
         n2 = None
 
         for node in nodes:
-            rospy.loginfo("Traverser:clean_node_path: going to list of nodes node")
+            #rospy.loginfo("Traverser:clean_node_path: going to list of nodes node")
             if index == 0:
                 n1 = node
             if index == 1:
@@ -137,7 +144,7 @@ class Traverser(object):
             if index >= 2:
                 if n1 and n2 is not None:
                     if n1.state[0] != node.state[0] and n1.state[1] != node.state[1]:
-                        rospy.loginfo("Traverser:clean_node_path: deleting node")
+                        #rospy.loginfo("Traverser:clean_node_path: deleting node")
                         del nodes[n2_index]
                 n1 = n2
                 n2 = node

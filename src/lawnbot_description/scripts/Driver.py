@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt_ranges
 # This driver is heavily inspired by:
 # https://answers.ros.org/question/232216/multiple-subscribers-and-single-publisher-in-one-python-script/
 # Sood and tercelkisor deserve credit.
@@ -40,21 +41,31 @@ class Driver:
         # anonymous=True flag means that rospy will choose a unique
         # name for our 'listener' node so that multiple listeners can
         # run simultaneously.
-        rospy.init_node('jackal_lawnbot_explorer', anonymous=True)
+
+        # For using jackal
+        #rospy.init_node('jackal_lawnbot_explorer', anonymous=True)
+        rospy.init_node('turtlebot_lawnbot_explorer', anonymous=True)
         rospy.loginfo("Waiting to start...")
 
         # set processing rate
         rospy.Rate(20)
 
         # init subscribers
-        rospy.Subscriber("/odometry/filtered", Odometry, state.odom_callback)
-        rospy.Subscriber("/front/scan", LaserScan, state.laser_callback)
-        move_publisher = rospy.Publisher('/jackal_velocity_controller/cmd_vel', Twist)
+        # For using jackal
+        # rospy.Subscriber("/odometry/filtered", Odometry, state.odom_callback)
+        # rospy.Subscriber("/front/scan", LaserScan, state.laser_callback)
+        # move_publisher = rospy.Publisher('/jackal_velocity_controller/cmd_vel', Twist)
+
+        # For using turtlebot
+        rospy.Subscriber("/odom", Odometry, state.odom_callback)
+        rospy.Subscriber("/scan", LaserScan, state.turtle_laser_callback)
+
+        move_publisher = rospy.Publisher('/cmd_vel_mux/input/navi', Twist)
         #rospy.Subscriber("/front/left/image_raw/compressedDepth", LaserScan, state.laser_callback)
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
 
         traverser = Traverser()
-        traverser.call_starting_move(state, move_publisher)
+        #traverser.call_starting_move(state, move_publisher)
         sleep(2)
 
 
@@ -84,13 +95,26 @@ class Driver:
                 print("well, it WASN'T defined after all!")
             except TypeError:
                 print("State is not set yet")
+            '''
+            try:
+                print("Refreshing...")
+                x = [None] * len(state.ranges)
+                for i in range(len(state.ranges)):
+                    x[i] = i
 
+                plt_ranges.clf()
+                plt_ranges.plot(x, state.ranges)
+                plt_ranges.pause(0.5)
+            except NameError:
+                print("well, it WASN'T defined after all!")
+            
             traverser = Traverser()
             if node is not None:
                 traverser.call_move(node.path(), state, move_publisher)
             else:
                 print("Node is null")
                 traverser.back_out(move_publisher)
+            '''
         '''
         while not rospy.is_shutdown():
             try:
@@ -115,5 +139,8 @@ if __name__ == '__main__':
     global state
     plt.ion()
     plt.show()
+    plt_ranges.figure()
+    plt_ranges.ion()
+    plt_ranges.show()
     dr = Driver()
     dr.run()
