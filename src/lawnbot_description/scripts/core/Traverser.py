@@ -16,15 +16,15 @@ class Traverser(object):
     """
 
     def __init__(self):
-        self.max_node_path_length = 5
+        self.max_node_path_length = 25
 
     def call_starting_move(self, state, move_publisher=rospy.Publisher):
 
         self.cmd_turn = Twist()
         current_z = state.z
-        self.cmd_turn.angular.z = 4
+        self.cmd_turn.angular.z = .1
         move_publisher.publish(self.cmd_turn)
-        sleep(1.5)
+        sleep(.5)
 
     def call_move(self, nodes, state, move_publisher=rospy.Publisher):
 
@@ -60,8 +60,8 @@ class Traverser(object):
                 if state.state[node.state[0]][node.state[1]] == 2:
                     break
 
-                #rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
-                #rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
+                # rospy.loginfo("Traversing from y %s x %s", self.last_y, self.last_x)
+                # rospy.loginfo("Traversing new node %s y %s x %s", node.state, self.dest_y, self.dest_x)
 
                 try:
                     self.dest_angle
@@ -74,12 +74,12 @@ class Traverser(object):
                     # rospy.loginfo("Traversing angle by %s to z %s", self.dest_angle, self.current_z)
                     self.update(node, state)
 
-                    # rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
+                    #rospy.loginfo("Traversing betweenpoints x1 %s y1 %s and x2 %s y2 %s",current_x, current_y, dest_x, dest_y)
 
                     if (abs(self.dest_angle - self.current_z) <= .1 and not location_reached):
-                        # cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
+                        #self.cmd_move.linear.x = np.linalg.norm((np.array((current_x, current_y, 0)), np.array((dest_x, dest_y, 0))))
 
-                        # rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
+                        rospy.loginfo("Traversing x by %s", self.cmd_move.linear.x)
                         max = self.max
                         counter = 0
                         while self.max <= max:
@@ -88,10 +88,11 @@ class Traverser(object):
                             move_publisher.publish(self.cmd_move)
                             self.update(node, state)
                             counter += 1
-                            # rospy.loginfo("Traversing x by %s where max is %s and self.max is %s", self.cmd_move.linear.x, max, self.max)
+                            rospy.loginfo("Traversing x by %s where max is %s and self.max is %s", self.cmd_move.linear.x, max, self.max)
                         location_reached = True
                     else:
                         self.cmd_turn.angular.z = self.get_angle()
+                        # rospy.loginfo("Traverser:call_move: turning: %s", self.cmd_turn )
                         move_publisher.publish(self.cmd_turn)
             else:
                 pass#rospy.loginfo("Traverser:call_move: skipping index %s", index)

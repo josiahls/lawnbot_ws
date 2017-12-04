@@ -21,7 +21,7 @@ class LawnBotProblem(object):
         self.initial = initial
         self.goal = goal
         self.state_space = state_space
-        self.action_padding = 3
+        self.action_padding = 4
         self.h_location = [0, 0]
         self.gen_h(initial)
 

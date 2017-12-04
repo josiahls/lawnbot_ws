@@ -57,20 +57,21 @@ class Driver:
         # move_publisher = rospy.Publisher('/jackal_velocity_controller/cmd_vel', Twist)
 
         # For using turtlebot
-        rospy.Subscriber("/odom", Odometry, state.odom_callback)
-        rospy.Subscriber("/scan", LaserScan, state.turtle_laser_callback)
+        rospy.Subscriber("/odom", Odometry, state.odom_callback, queue_size=1)
+        rospy.Rate(1)
+        rospy.Subscriber("/scan", LaserScan, state.turtle_laser_callback, queue_size=1)
 
-        move_publisher = rospy.Publisher('/cmd_vel_mux/input/navi', Twist)
+        move_publisher = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
         #rospy.Subscriber("/front/left/image_raw/compressedDepth", LaserScan, state.laser_callback)
         #rospy.Subscriber("/front/left/image_raw/compressed", Odometry, self.callback)
 
         traverser = Traverser()
-        #traverser.call_starting_move(state, move_publisher)
+        traverser.call_starting_move(state, move_publisher)
         sleep(2)
 
-
+        index = 0
         while not rospy.is_shutdown():
-
+            index += 1
             problem  = LawnBotProblem(initial=np.array([state.y, state.x],int), goal=0, state_space=state)
 
             searcher = UninformedSearch()
@@ -107,14 +108,15 @@ class Driver:
                 plt_ranges.pause(0.5)
             except NameError:
                 print("well, it WASN'T defined after all!")
-            
+            '''
             traverser = Traverser()
             if node is not None:
                 traverser.call_move(node.path(), state, move_publisher)
             else:
                 print("Node is null")
-                traverser.back_out(move_publisher)
-            '''
+                if index > 2:
+                    traverser.back_out(move_publisher)
+
         '''
         while not rospy.is_shutdown():
             try:

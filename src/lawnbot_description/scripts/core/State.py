@@ -94,45 +94,16 @@ class State:
         # Set final current loc once all expansion is done
         self.x = x + self.x_offset
         self.y = y + self.y_offset
+        #rospy.loginfo("State:odom_callback: self.x is %s self.y is %s", self.x, self.y)
 
     def laser_callback(self, scan=LaserScan()):
         self.ranges = scan.ranges
         sampled_x = self.x
         sampled_y = self.y
 
-        rospy.loginfo("State:laser_callback: %s", self.ranges)
-
-        #inc = 0
-        #for range in self.ranges:
-        #plot_x = odom_x + self.ranges[int(len(self.ranges)/2) * np.cos(0)[0]]
-        #plot_y = odom_y + self.ranges[int(len(self.ranges)/2) * np.sin(0)[0]]
-
-        '''
-                for i in range(len(self.ranges)):
-            plot_x = odom_x + self.ranges[int(len(self.ranges)/2)] * \
-                              np.cos(i * scan.angle_increment) * self.precision
-            
-            plot_y = odom_y + self.ranges[int(len(self.ranges)/2)] * \
-                              np.sin(i * scan.angle_increment) * self.precision
-
-            if (self.expand_state(plot_y, plot_x)):
-                self.state[plot_y][plot_x] = 2
-        '''
-        rospy.loginfo("NEW SET")
-        #rospy.loginfo("State:laser_callback: adjusted z orientation: %s", np.rad2deg(self.z))
-        #for i in range(len(self.ranges)/2-1, len(self.ranges)/2):
-        #for i in range(len(self.ranges)/2-80, len(self.ranges)/2+80, 10):
-        #for i in range(0, len(self.ranges), 10):
-        # reducing the increment for the turtlebot
         for i in range(0, len(self.ranges), 2):
-            #rospy.loginfo("Setting for angle %s", i)
             angle = i - len(self.ranges)/2-1
-            # might use cos(i * angle_inc + odom_angleheading
-            # rospy.loginfo("State:laser_callback: range: %s at slot %s", self.ranges[i],i)
-            #rospy.loginfo("State:laser_callback: adjusted x range: %s", self.ranges[i] * np.cos(0 * scan.angle_increment + self.z) * self.precision)
-            #rospy.loginfo("State:laser_callback: adjusted y range: %s", self.ranges[i] * np.sin(0 * scan.angle_increment + self.z) * self.precision)
-            #rospy.loginfo("State:laser_callback: scan angle increment: %s", scan.angle_increment)
-            #rospy.loginfo("State:laser_callback: max angle %s, min: %s", scan.angle_max, scan.angle_min)
+
             if State.lock:
                 print("Laser is locked out")
                 break
@@ -144,13 +115,6 @@ class State:
             adjust_x = self.ranges[i] * np.cos(angle * scan.angle_increment + self.z) * self.precision
             adjust_y = self.ranges[i] * np.sin(angle * scan.angle_increment + self.z) * self.precision
 
-            #adjust_x = self.ranges[i] * np.cos(angle * scan.angle_increment) * self.precision
-            #adjust_y = self.ranges[i] * np.sin(angle * scan.angle_increment) * self.precision
-
-            rospy.loginfo("State:laser_callback: x:%s y:%s with self.x %s self.y %s",
-                          adjust_x,adjust_y, self.x, self.y)
-            # Set adjusted x and y
-
             plot_x = int(np.around(self.x + -1 * adjust_x))
             plot_y = int(np.around(self.y + adjust_y))
             previous_offset_x = self.x_offset
@@ -161,8 +125,6 @@ class State:
                 if (self.expand_state(plot_y, plot_x)):
                     self.state[plot_y + (self.y_offset - previous_offset_y)][plot_x - (self.x_offset - previous_offset_x)] = 2
             #sleep(.5)
-        #rospy.loginfo("State:laser_callback: ranges:%s", self.ranges)
-        #rospy.loginfo("State:laser_callback: angle_min:%s angle_max:%s angle_inc:%s", scan.angle_min,scan.angle_max, scan.angle_increment)
 
     def turtle_laser_callback(self, scan=LaserScan()):
         self.ranges = scan.ranges
@@ -170,16 +132,56 @@ class State:
         sampled_y = self.y
         sampled_z = self.z
 
+        current_offset_x = self.x_offset
+        current_offset_y = self.y_offset
+
         #rospy.loginfo("State:laser_callback: %s", self.ranges)
 
         #for i in range(0, len(self.ranges), 2):
-        rospy.loginfo("State:turtle_laser_callback: x %s y %s z %s", sampled_x, sampled_y, sampled_z)
+        #rospy.loginfo("State:turtle_laser_callback: x %s y %s z %s", sampled_x, sampled_y, sampled_z)
+        #rospy.loginfo("State:turtle_laser_callback: x offset: %s y offset: %s", current_offset_x, current_offset_y)
 
-        for i in range(len(self.ranges) / 2, len(self.ranges) / 2+1):
-            rospy.loginfo("State:turtle_laser_callback: range i %s at distance: %s", i, self.ranges[i])
-            pass
+        #for i in range(len(self.ranges) / 2, len(self.ranges) / 2+1):
 
-        sleep(.5)
+        for i in range(0, len(self.ranges), 20):
+            #rospy.loginfo("State:turtle_laser_callback: range i %s at distance: %s using angle increment %s", i, self.ranges[i], scan.angle_increment)
+
+            angle = i * scan.angle_increment - scan.angle_max + sampled_z
+
+            #rospy.loginfo("State:turtle_laser_callback: angle is: %s at range %s", angle, self.ranges[i])
+
+            adjust_x = np.around(self.ranges[i] * (np.cos(angle) * self.precision * -1))
+            adjust_y = np.around(self.ranges[i] * np.sin(angle) * self.precision)
+            #rospy.loginfo("State:turtle_laser_callback: adjust y: %s adjust x %s", adjust_y, adjust_x)
+
+            if State.lock:
+                print("Laser is locked out")
+                break
+            if self.x != sampled_x or self.y != sampled_y:
+                print("Laser ranges are out dated. Needs to be re sampled")
+                break
+
+            c1 = self.ranges[i] if i - 1 < 0 else self.ranges[i - 1]
+            c2 = self.ranges[i]
+            c3 = self.ranges[i] if i + 1 > len(self.ranges) else self.ranges[i + 1]
+
+            gradient = np.gradient(np.array([c1, c2, c3]))
+            max_gradient = np.amax(gradient)
+
+            #rospy.loginfo("State:turtle_laser_callback: gradient at %s is %s",i, np.abs(max_gradient))
+
+            if not np.math.isnan(adjust_x) and not np.math.isnan(adjust_y) and \
+                            np.abs(max_gradient) < 0.1:
+
+                if self.expand_state(sampled_y + adjust_y, sampled_x + adjust_x) and \
+                                current_offset_x != self.x_offset or current_offset_y != self.y_offset:
+                    #rospy.loginfo("State:turtle_laser_callback: offsets changed or expanded ")
+                    break
+
+                if (self.max_range > np.abs(adjust_x) and
+                            self.max_range > np.abs(adjust_y)):
+                    self.state[sampled_y + adjust_y][sampled_x + adjust_x] = 2
+        sleep(.2)
 
     def expand_state(self, y, x):
         """
@@ -211,27 +213,27 @@ class State:
                 self.state = np.concatenate((np.zeros((abs(y), self.state.shape[1]), float), self.state), axis=0)
                 self.y_offset += abs(y)
                 y += abs(y)
-                rospy.loginfo("State:odom_callback: Adjusting y at %s", self.y_offset)
+                rospy.loginfo("State:expand_state: Adjusting y at %s", self.y_offset)
             if x < 0 and not State.lock:
                 State.lock = True
                 self.state = np.concatenate((np.zeros((self.state.shape[0], abs(x)), float), self.state), axis=1)
                 self.x_offset += abs(x)
                 x += abs(x)
-                rospy.loginfo("State:odom_callback: Adjusting x at %s", self.x_offset)
+                rospy.loginfo("State:expand_state: Adjusting x at %s", self.x_offset)
             # If they are larger, expand the state up or right
             if not State.lock:
                 while self.state.shape[0] <= y:
                     State.lock = True
-                    rospy.loginfo("State:odom_callback: Expanding in the y:%s shape: %s direction by %s",y,self.state.shape,  y - self.state.shape[0])
+                    rospy.loginfo("State:expand_state: Expanding in the y:%s shape: %s direction by %s",y,self.state.shape,  y - self.state.shape[0])
                     self.state = np.concatenate((self.state, np.zeros((1, self.state.shape[1]), float)),axis=0)
                 while self.state.shape[1] <= x:
                     State.lock = True
-                    rospy.loginfo("State:odom_callback: Expanding in the x direction by %s", x - self.state.shape[1])
+                    rospy.loginfo("State:expand_state: Expanding in the x direction by %s", x - self.state.shape[1])
                     self.state = np.concatenate((self.state, np.zeros((self.state.shape[0], 1), float)), axis=1)
             # Unlock the method
-            temp = State.lock
             State.lock = False
-            return temp
+            rospy.loginfo("State:expand_state: expanded state, returning false")
+            return False
         else:
             rospy.loginfo("State:expand: state is locked")
             State.lock = False
