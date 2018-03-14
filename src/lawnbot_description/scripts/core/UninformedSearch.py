@@ -73,7 +73,7 @@ class UninformedSearch(object):
         frontier.append(node)
         # Initialize empty set
         explored = set()
-        # While the frontier is empty
+        # While the frontier is not empty
         while frontier:
             # Get the first node with lowest f
             node = frontier.pop()

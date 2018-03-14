@@ -84,7 +84,7 @@ class Traverser(object):
                         counter = 0
                         while self.max <= max:
                             max = self.max
-                            self.cmd_move.linear.x = .2 if counter != 1000 else -.6
+                            self.cmd_move.linear.x = .1 if counter != 1000 else -.2
                             move_publisher.publish(self.cmd_move)
                             self.update(node, state)
                             counter += 1
@@ -99,7 +99,7 @@ class Traverser(object):
 
     def back_out(self, move_publisher=rospy.Publisher):
         self.cmd_move = Twist()
-        self.cmd_move.linear.x = -.2
+        self.cmd_move.linear.x = -.1
         move_publisher.publish(self.cmd_move)
 
     def get_angle(self):
@@ -169,6 +169,8 @@ class Traverser(object):
                 closest_node_distance = distance
                 closest_node_index = node_index
             node_index += 1
+
+        #closest_node_index = 1 if len(nodes) > 2 and closest_node_index == 0 else closest_node_index
 
         return closest_node_index
 

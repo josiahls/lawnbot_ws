@@ -1,3 +1,0 @@
-
-class InformedSearch(object):
-    pass

@@ -5,7 +5,7 @@ d = generate_distutils_setup(
     packages=['lawnbot_description'],
     scripts=['/scripts/Driver.py',
              '/scripts/core/State.py',
-             '/scripts/core/Node.py'],
+             '/scripts/core/SearchNode.py'],
     package_dir={'': 'src'}
 )
 
